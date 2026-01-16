@@ -330,21 +330,36 @@
             // 计算应发工资
             const grossSalary = calculateGrossSalary(inputs.monthlySalary, inputs.workDays);
             
+            // 计算折算后的餐补
+            const mealAllowance = inputs.mealAllowance * (inputs.workDays ? inputs.workDays / 21.75 : 1);
+            
+            // 合并工资和餐补作为总收入
+            const totalIncome = grossSalary + mealAllowance;
+            
             // 计算社保公积金等扣除
-            const insuranceTotal = calculateInsurance(inputs.insuranceBase, inputs.housingFundRate);
+            const pensionAmount = inputs.insuranceBase * INSURANCE_RATES.pension;
+            const medicalAmount = inputs.insuranceBase * INSURANCE_RATES.medical;
+            const unemploymentAmount = inputs.insuranceBase * INSURANCE_RATES.unemployment;
+            const housingFundAmount = inputs.insuranceBase * inputs.housingFundRate;
+            const insuranceTotal = pensionAmount + medicalAmount + unemploymentAmount + housingFundAmount;
             const totalDeductions = insuranceTotal + inputs.otherDeductions;
             
             // 计算应纳税所得额
-            const taxableIncome = grossSalary - totalDeductions - DEDUCTION_STANDARD - inputs.specialDeduction;
+            const taxableIncome = totalIncome - totalDeductions - DEDUCTION_STANDARD - inputs.specialDeduction;
 
             // 计算个人所得税
             const personalIncomeTax = calculateTax(taxableIncome);
 
             // 计算税后工资
-            const afterTaxSalary = grossSalary - totalDeductions - personalIncomeTax + inputs.mealAllowance;
+            const afterTaxSalary = totalIncome - totalDeductions - personalIncomeTax;
             
             displayResults({
                 grossSalary,
+                mealAllowance,
+                pensionAmount,
+                medicalAmount,
+                unemploymentAmount,
+                housingFundAmount,
                 inputs,
                 personalIncomeTax,
                 finalAfterTax: afterTaxSalary
@@ -353,10 +368,12 @@
 
         // 获取输入值
         function getInputs() {
+            const monthlySalaryEl = document.getElementById('monthlySalary');
+            const monthlySalary = parseFloat(monthlySalaryEl.value) || 0;
             return {
-                monthlySalary: parseFloat(document.getElementById('monthlySalary').value) || 0,
+                monthlySalary,
                 workDays: parseFloat(document.getElementById('workDays').value) || null,
-                insuranceBase: parseFloat(document.getElementById('insuranceBase').value) || (parseFloat(document.getElementById('monthlySalary').value) || 0),
+                insuranceBase: parseFloat(document.getElementById('insuranceBase').value) || monthlySalary,
                 housingFundRate: (parseFloat(document.getElementById('housingFundRate').value) || 0) / 100,
                 specialDeduction: parseFloat(document.getElementById('specialDeduction').value) || 0,
                 otherDeductions: parseFloat(document.getElementById('otherDeductions').value) || 0,
@@ -367,11 +384,6 @@
         // 计算应发工资
         function calculateGrossSalary(monthlySalary, workDays) {
             return monthlySalary * (workDays ? workDays / 21.75 : 1);
-        }
-
-        // 计算社保公积金总额
-        function calculateInsurance(insuranceBase, housingFundRate) {
-            return insuranceBase * (INSURANCE_RATES.pension + INSURANCE_RATES.medical + INSURANCE_RATES.unemployment + housingFundRate);
         }
 
         // 根据税率表计算个人所得税
@@ -395,13 +407,15 @@
         // 获取结果项目列表
         function getResultItems(data) {
             return [
-                [`养老保险`, INSURANCE_RATES.pension, data.inputs.monthlySalary * INSURANCE_RATES.pension],
-                [`医疗保险`, INSURANCE_RATES.medical, data.inputs.monthlySalary * INSURANCE_RATES.medical],
-                [`失业保险`, INSURANCE_RATES.unemployment, data.inputs.monthlySalary * INSURANCE_RATES.unemployment],
-                [`住房公积金`, data.inputs.housingFundRate, data.inputs.monthlySalary * data.inputs.housingFundRate],
+                [`应发工资`, null, data.grossSalary],
+                [`餐补`, null, data.mealAllowance],
+                [`养老保险`, INSURANCE_RATES.pension, data.pensionAmount],
+                [`医疗保险`, INSURANCE_RATES.medical, data.medicalAmount],
+                [`失业保险`, INSURANCE_RATES.unemployment, data.unemploymentAmount],
+                [`住房公积金`, data.inputs.housingFundRate, data.housingFundAmount],
                 [`其他扣除`, null, data.inputs.otherDeductions],
                 [`个人所得税`, null, data.personalIncomeTax],
-                [`<strong>税后工资（含餐补）</strong>`, null, data.finalAfterTax]
+                [`<strong>税后工资</strong>`, null, data.finalAfterTax]
             ];
         }
 
