@@ -336,22 +336,21 @@
             // 合并工资和餐补作为总收入
             const totalIncome = grossSalary + mealAllowance;
             
-            // 计算社保公积金等扣除
+            // 计算社保公积金等扣除（注意：`其他扣除项`应在个税之后扣除）
             const pensionAmount = inputs.insuranceBase * INSURANCE_RATES.pension;
             const medicalAmount = inputs.insuranceBase * INSURANCE_RATES.medical;
             const unemploymentAmount = inputs.insuranceBase * INSURANCE_RATES.unemployment;
             const housingFundAmount = inputs.insuranceBase * inputs.housingFundRate;
             const insuranceTotal = pensionAmount + medicalAmount + unemploymentAmount + housingFundAmount;
-            const totalDeductions = insuranceTotal + inputs.otherDeductions;
-            
-            // 计算应纳税所得额
-            const taxableIncome = totalIncome - totalDeductions - DEDUCTION_STANDARD - inputs.specialDeduction;
+
+            // 计算应纳税所得额（不含其他扣除项）
+            const taxableIncome = totalIncome - insuranceTotal - DEDUCTION_STANDARD - inputs.specialDeduction;
 
             // 计算个人所得税
             const personalIncomeTax = calculateTax(taxableIncome);
 
-            // 计算税后工资
-            const afterTaxSalary = totalIncome - totalDeductions - personalIncomeTax;
+            // 计算税后工资（在缴纳个税之后再扣除其他扣除项）
+            const afterTaxSalary = totalIncome - insuranceTotal - personalIncomeTax - inputs.otherDeductions;
             
             displayResults({
                 grossSalary,
@@ -413,8 +412,8 @@
                 [`医疗保险`, INSURANCE_RATES.medical, data.medicalAmount],
                 [`失业保险`, INSURANCE_RATES.unemployment, data.unemploymentAmount],
                 [`住房公积金`, data.inputs.housingFundRate, data.housingFundAmount],
-                [`其他扣除`, null, data.inputs.otherDeductions],
                 [`个人所得税`, null, data.personalIncomeTax],
+                [`其他扣除`, null, data.inputs.otherDeductions],
                 [`<strong>税后工资</strong>`, null, data.finalAfterTax]
             ];
         }
