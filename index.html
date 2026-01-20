@@ -266,7 +266,7 @@
                     
                     <div class="input-group">
                         <label for="specialDeduction">个税专项附加扣除:</label>
-                        <input type="number" id="specialDeduction" value="0" step="100" min="0">
+                        <input type="number" id="specialDeduction" value="1500" step="100" min="0">
                     </div>
 
                     <div class="input-group">
@@ -335,12 +335,13 @@
             
             // 合并工资和餐补作为总收入
             const totalIncome = grossSalary + mealAllowance;
-            
-            // 计算社保公积金等扣除（注意：`其他扣除项`应在个税之后扣除）
-            const pensionAmount = inputs.insuranceBase * INSURANCE_RATES.pension;
-            const medicalAmount = inputs.insuranceBase * INSURANCE_RATES.medical;
-            const unemploymentAmount = inputs.insuranceBase * INSURANCE_RATES.unemployment;
-            const housingFundAmount = inputs.insuranceBase * inputs.housingFundRate;
+
+            // 计算社保公积金等扣除（注意：基数始终以月薪或用户指定的 `insuranceBase` 为准，与出勤天数无关；`其他扣除项`应在个税之后扣除）
+            const insuranceBaseValue = inputs.insuranceBase || inputs.monthlySalary;
+            const pensionAmount = insuranceBaseValue * INSURANCE_RATES.pension;
+            const medicalAmount = insuranceBaseValue * INSURANCE_RATES.medical;
+            const unemploymentAmount = insuranceBaseValue * INSURANCE_RATES.unemployment;
+            const housingFundAmount = insuranceBaseValue * inputs.housingFundRate;
             const insuranceTotal = pensionAmount + medicalAmount + unemploymentAmount + housingFundAmount;
 
             // 计算应纳税所得额（不含其他扣除项）
@@ -374,7 +375,7 @@
                 workDays: parseFloat(document.getElementById('workDays').value) || null,
                 insuranceBase: parseFloat(document.getElementById('insuranceBase').value) || monthlySalary,
                 housingFundRate: (parseFloat(document.getElementById('housingFundRate').value) || 0) / 100,
-                specialDeduction: parseFloat(document.getElementById('specialDeduction').value) || 0,
+                specialDeduction: parseFloat(document.getElementById('specialDeduction').value) || 1500,
                 otherDeductions: parseFloat(document.getElementById('otherDeductions').value) || 0,
                 mealAllowance: parseFloat(document.getElementById('mealAllowance').value) || 0
             };
