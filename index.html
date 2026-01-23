@@ -370,12 +370,13 @@
         function getInputs() {
             const monthlySalaryEl = document.getElementById('monthlySalary');
             const monthlySalary = parseFloat(monthlySalaryEl.value) || 0;
+            const specialDeductionValue = parseFloat(document.getElementById('specialDeduction').value);
             return {
                 monthlySalary,
                 workDays: parseFloat(document.getElementById('workDays').value) || null,
                 insuranceBase: parseFloat(document.getElementById('insuranceBase').value) || monthlySalary,
                 housingFundRate: (parseFloat(document.getElementById('housingFundRate').value) || 0) / 100,
-                specialDeduction: parseFloat(document.getElementById('specialDeduction').value) || 1500,
+                specialDeduction: isNaN(specialDeductionValue) ? 1500 : specialDeductionValue,
                 otherDeductions: parseFloat(document.getElementById('otherDeductions').value) || 0,
                 mealAllowance: parseFloat(document.getElementById('mealAllowance').value) || 0
             };
